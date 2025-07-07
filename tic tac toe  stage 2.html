@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stage 2: Tic Tac Toe with Scoreboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #2563eb;
+            margin-bottom: 1rem;
+        }
+
+        .scoreboard {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .scoreboard h2 {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 0.75rem;
+        }
+
+        .scores {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .score-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .player-x { color: #2563eb; }
+        .player-o { color: #dc2626; }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin: 0 auto 1.5rem;
+            width: 240px;
+        }
+
+        .square {
+            width: 75px;
+            height: 75px;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .square:hover:not(.disabled) {
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .square.disabled {
+            cursor: not-allowed;
+        }
+
+        .square.winning {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .x { color: #2563eb; }
+        .o { color: #dc2626; }
+
+        .buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .value {
+            animation: fadeIn 0.2s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        
+        <div class="scoreboard">
+            <h2>Score Board</h2>
+            <div class="scores">
+                <div class="score-card">
+                    <div class="score-number player-x" id="scoreX">0</div>
+                    <div>Player X</div>
+                </div>
+                <div class="score-card">
+                    <div class="score-number player-o" id="scoreO">0</div>
+                    <div>Player O</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="status" class="status">Player X's Turn</div>
+        <div class="board" id="board">
+            <button class="square" data-index="0"></button>
+            <button class="square" data-index="1"></button>
+            <button class="square" data-index="2"></button>
+            <button class="square" data-index="3"></button>
+            <button class="square" data-index="4"></button>
+            <button class="square" data-index="5"></button>
+            <button class="square" data-index="6"></button>
+            <button class="square" data-index="7"></button>
+            <button class="square" data-index="8"></button>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-primary" onclick="resetGame()">New Game</button>
+            <button class="btn btn-secondary" onclick="resetScores()">Reset Scores</button>
+        </div>
+    </div>
+
+    <script>
+        let board = Array(9).fill(null);
+        let currentPlayer = 'X';
+        let gameOver = false;
+        let scores = { X: 0, O: 0 };
+
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        document.querySelectorAll('.square').forEach(square => {
+            square.addEventListener('click', () => {
+                const index = parseInt(square.dataset.index);
+                if (board[index] || gameOver) return;
+
+                board[index] = currentPlayer;
+                square.innerHTML = `<span class="value ${currentPlayer.toLowerCase()}">${currentPlayer}</span>`;
+                square.classList.add('disabled');
+
+                if (checkWinner()) {
+                    document.getElementById('status').textContent = `Player ${currentPlayer} Wins!`;
+                    scores[currentPlayer]++;
+                    updateScoreboard();
+                    gameOver = true;
+                    highlightWinning();
+                } else if (board.every(cell => cell)) {
+                    document.getElementById('status').textContent = "It's a Draw!";
+                    gameOver = true;
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    document.getElementById('status').textContent = `Player ${currentPlayer}'s Turn`;
+                }
+            });
+        });
+
+        function checkWinner() {
+            return winningCombinations.some(combo => {
+                if (combo.every(index => board[index] === currentPlayer)) {
+                    combo.forEach(index => {
+                        document.querySelectorAll('.square')[index].classList.add('winning');
+                    });
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function highlightWinning() {
+            document.querySelectorAll('.square').forEach(square => {
+                if (!square.classList.contains('winning')) {
+                    square.classList.add('disabled');
+                }
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('scoreX').textContent = scores.X;
+            document.getElementById('scoreO').textContent = scores.O;
+        }
+
+        function resetGame() {
+            board = Array(9).fill(null);
+            currentPlayer = 'X';
+            gameOver = false;
+            document.getElementById('status').textContent = "Player X's Turn";
+            document.querySelectorAll('.square').forEach(square => {
+                square.innerHTML = '';
+                square.className = 'square';
+            });
+        }
+
+        function resetScores() {
+            scores = { X: 0, O: 0 };
+            updateScoreboard();
+            resetGame();
+        }
+    </script>
+</body>
+</html>
